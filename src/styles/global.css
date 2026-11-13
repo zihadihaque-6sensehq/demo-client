@@ -390,3 +390,101 @@ body {
 .customer-account-id {
   color: var(--color-muted);
 }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 45%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  padding: 24px;
+}
+
+.modal {
+  width: 100%;
+  max-width: 440px;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: 0 16px 40px rgb(15 23 42 / 18%);
+  padding: 24px;
+}
+
+.modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.modal__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modal__close {
+  min-height: 44px;
+  min-width: 44px;
+  border: none;
+  background: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-muted);
+}
+
+.modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field__label {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.field__input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.field__input--error {
+  border-color: var(--color-red);
+}
+
+.field__error {
+  color: var(--color-red);
+  font-size: 0.875rem;
+}
+
+.empty-state__illustration {
+  margin: 0 0 12px;
+  font-size: 2rem;
+}
+
+.invited-tab .overview-table-wrap .overview-table tbody tr {
+  cursor: default;
+}
+
+.invited-tab .overview-table-wrap .overview-table tbody tr:hover {
+  background: transparent;
+}
