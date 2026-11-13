@@ -11,3 +11,11 @@ export interface CustomerExportAuditEntry {
     activity?: string;
   };
 }
+
+export interface InviteSentAuditEntry {
+  action: "customers.invite.sent";
+  adminIdentity: AdminIdentity;
+  timestamp: string;
+  inviteId: string;
+  email: string;
+}

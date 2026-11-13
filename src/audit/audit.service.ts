@@ -1,8 +1,21 @@
 import { AdminIdentity } from "../auth/admin-session.types";
-import { CustomerExportAuditEntry } from "./audit.types";
+import {
+  CustomerExportAuditEntry,
+  InviteSentAuditEntry,
+} from "./audit.types";
+
+class Logger {
+  constructor(private readonly context: string) {}
+
+  log(message: string): void {
+    console.log(`[${this.context}] ${message}`);
+  }
+}
 
 export class AuditService {
+  private readonly logger = new Logger(AuditService.name);
   private readonly entries: CustomerExportAuditEntry[] = [];
+  private readonly inviteEntries: InviteSentAuditEntry[] = [];
 
   recordCustomerExportStarted(params: {
     adminIdentity: AdminIdentity;
@@ -26,6 +39,25 @@ export class AuditService {
 
   getCustomerExportAuditEntries(): readonly CustomerExportAuditEntry[] {
     return this.entries;
+  }
+
+  recordInviteSent(params: {
+    adminIdentity: AdminIdentity;
+    inviteId: string;
+    email: string;
+  }): InviteSentAuditEntry {
+    const entry: InviteSentAuditEntry = {
+      action: "customers.invite.sent",
+      adminIdentity: { ...params.adminIdentity },
+      timestamp: new Date().toISOString(),
+      inviteId: params.inviteId,
+      email: params.email,
+    };
+    this.inviteEntries.push(entry);
+    this.logger.log(
+      `customers.invite.sent adminId=${params.adminIdentity.adminId} timestamp=${entry.timestamp} inviteId=${params.inviteId} email=${params.email}`,
+    );
+    return entry;
   }
 }
 

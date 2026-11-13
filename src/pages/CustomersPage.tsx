@@ -1,12 +1,21 @@
-import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { useLocation } from "react-router-dom";
 import { exportCustomers } from "@/api/customers";
 import { ApiError } from "@/api/http";
+import { InvitedTab } from "@/components/invited/InvitedTab";
+import { SendInviteModal } from "@/components/invited/SendInviteModal";
 import { OverviewTab } from "@/components/overview/OverviewTab";
 import { useToast } from "@/context/ToastContext";
 import { useCustomersList } from "@/hooks/useCustomersList";
+import { useInvitedList } from "@/hooks/useInvitedList";
 import { ALL_FILTER, OverviewFilters } from "@/types/customers";
-
 type CustomersTab = "overview" | "abandoned" | "invited";
 
 const CUSTOMERS_TABS: CustomersTab[] = ["overview", "abandoned", "invited"];
@@ -34,6 +43,7 @@ function readOverviewFiltersFromState(state: unknown): OverviewFilters | undefin
 export function CustomersPage() {
   const location = useLocation();
   const { showToast } = useToast();
+  const inviteButtonRef = useRef<HTMLButtonElement>(null);
   const initialFilters = useMemo(
     () => readOverviewFiltersFromState(location.state),
     [location.state],
@@ -41,6 +51,10 @@ export function CustomersPage() {
   const list = useCustomersList(initialFilters);
   const { setAllFilters } = list;
   const [activeTab, setActiveTab] = useState<CustomersTab>("overview");
+  const invitedList = useInvitedList({ enabled: activeTab === "invited" });
+  const { resetFilters: resetInvitedFilters, refresh: refreshInvitedList } =
+    invitedList;
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   useEffect(() => {
     const restored = readOverviewFiltersFromState(location.state);
@@ -48,6 +62,20 @@ export function CustomersPage() {
       setAllFilters(restored);
     }
   }, [location.state, setAllFilters]);
+
+  const handleTabSelect = useCallback(
+    (tab: CustomersTab) => {
+      if (tab === activeTab) return;
+      setActiveTab(tab);
+      setAllFilters({
+        state: ALL_FILTER,
+        region: ALL_FILTER,
+        activity: ALL_FILTER,
+      });
+      resetInvitedFilters();
+    },
+    [activeTab, setAllFilters, resetInvitedFilters],
+  );
 
   const handleExport = useCallback(async () => {
     if (list.systemWideEmpty) return;
@@ -73,6 +101,20 @@ export function CustomersPage() {
 
   const exportHidden = list.systemWideEmpty;
 
+  const handleInviteSuccess = useCallback(() => {
+    showToast("Invite Sent", "success");
+    if (activeTab === "invited") {
+      refreshInvitedList();
+    }
+  }, [activeTab, refreshInvitedList, showToast]);
+
+  const handleInviteError = useCallback(
+    (message: string) => {
+      showToast(message, "error");
+    },
+    [showToast],
+  );
+
   const handleTabKeyDown = useCallback(
     (event: KeyboardEvent<HTMLButtonElement>, tab: CustomersTab) => {
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -83,10 +125,10 @@ export function CustomersPage() {
         (index + offset + CUSTOMERS_TABS.length) % CUSTOMERS_TABS.length,
       );
       if (!nextTab) return;
-      setActiveTab(nextTab);
+      handleTabSelect(nextTab);
       document.getElementById(customersTabId(nextTab))?.focus();
     },
-    [],
+    [handleTabSelect],
   );
 
   return (
@@ -103,7 +145,12 @@ export function CustomersPage() {
               Export
             </button>
           )}
-          <button type="button" className="btn btn--primary">
+          <button
+            ref={inviteButtonRef}
+            type="button"
+            className="btn btn--primary"
+            onClick={() => setInviteModalOpen(true)}
+          >
             Invite
           </button>
         </div>
@@ -118,7 +165,7 @@ export function CustomersPage() {
           aria-controls={customersPanelId("overview")}
           tabIndex={activeTab === "overview" ? 0 : -1}
           className={`tab-bar__tab ${activeTab === "overview" ? "tab-bar__tab--active" : ""}`}
-          onClick={() => setActiveTab("overview")}
+          onClick={() => handleTabSelect("overview")}
           onKeyDown={(e) => handleTabKeyDown(e, "overview")}
         >
           Overview
@@ -131,7 +178,7 @@ export function CustomersPage() {
           aria-controls={customersPanelId("abandoned")}
           tabIndex={activeTab === "abandoned" ? 0 : -1}
           className={`tab-bar__tab ${activeTab === "abandoned" ? "tab-bar__tab--active" : ""}`}
-          onClick={() => setActiveTab("abandoned")}
+          onClick={() => handleTabSelect("abandoned")}
           onKeyDown={(e) => handleTabKeyDown(e, "abandoned")}
         >
           Abandoned Bookings
@@ -144,7 +191,7 @@ export function CustomersPage() {
           aria-controls={customersPanelId("invited")}
           tabIndex={activeTab === "invited" ? 0 : -1}
           className={`tab-bar__tab ${activeTab === "invited" ? "tab-bar__tab--active" : ""}`}
-          onClick={() => setActiveTab("invited")}
+          onClick={() => handleTabSelect("invited")}
           onKeyDown={(e) => handleTabKeyDown(e, "invited")}
         >
           Invited
@@ -171,17 +218,20 @@ export function CustomersPage() {
         </div>
       )}
       {activeTab === "invited" && (
-        <div
-          id={customersPanelId("invited")}
-          role="tabpanel"
-          aria-labelledby={customersTabId("invited")}
-          tabIndex={0}
-        >
-          <p className="tab-placeholder" role="status">
-            Invited is not in scope for this module.
-          </p>
-        </div>
+        <InvitedTab
+          list={invitedList}
+          panelId={customersPanelId("invited")}
+          tabId={customersTabId("invited")}
+        />
       )}
+
+      <SendInviteModal
+        open={inviteModalOpen}
+        onClose={() => setInviteModalOpen(false)}
+        onSuccess={handleInviteSuccess}
+        onError={handleInviteError}
+        returnFocusRef={inviteButtonRef}
+      />
     </div>
   );
 }
