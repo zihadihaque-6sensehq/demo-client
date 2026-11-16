@@ -1,28 +1,22 @@
-import { Link, Navigate, Route, Routes } from "react-router-dom";
-import { CustomersPage } from "@/pages/CustomersPage";
-import { CustomerAccountPage } from "@/pages/CustomerAccountPage";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { AdminApp } from "@/AdminApp";
+import { MarketingLayout } from "@/layouts/MarketingLayout";
+import { HomePage } from "@/pages/HomePage";
+import { MarketingSectionPage } from "@/pages/MarketingSectionPage";
 
 export function App() {
   return (
-    <div className="app-shell">
-      <aside className="app-sidebar" aria-label="Main navigation">
-        <div className="welcome-block">
-          <p className="welcome-block__label">Welcome</p>
-          <p className="welcome-block__name">Admin</p>
-        </div>
-        <nav>
-          <Link className="nav-link nav-link--active" to="/customers">
-            Customers
-          </Link>
-        </nav>
-      </aside>
-      <main className="app-main">
-        <Routes>
-          <Route path="/customers" element={<CustomersPage />} />
-          <Route path="/customers/:customerId" element={<CustomerAccountPage />} />
-          <Route path="*" element={<Navigate to="/customers" replace />} />
-        </Routes>
-      </main>
-    </div>
+    <Routes>
+      <Route element={<MarketingLayout />}>
+        <Route index element={<HomePage />} />
+        <Route path="services" element={<MarketingSectionPage title="Services" />} />
+        <Route path="work" element={<MarketingSectionPage title="Work" />} />
+        <Route path="process" element={<MarketingSectionPage title="Process" />} />
+        <Route path="about" element={<MarketingSectionPage title="About" />} />
+        <Route path="careers" element={<MarketingSectionPage title="Careers" />} />
+      </Route>
+      <Route path="/customers/*" element={<AdminApp />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
